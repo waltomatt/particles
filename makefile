@@ -1,2 +1,2 @@
 default:
-	g++ -g -o dist/particles src/*.cpp -lGL -lGLU -lglut
+	g++ -g -o dist/particles src/*.cpp -lGL -lGLU -lglfw

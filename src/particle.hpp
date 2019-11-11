@@ -3,15 +3,19 @@
 
 #include "GL/glut.h"
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 typedef glm::vec3 vec3;
+typedef glm::vec4 vec4;
 
 class Particle {
     public:
         Particle(   vec3 ipos,
                     vec3 ivel,
-                    vec3 icol,
-                    vec3 ecol,
+                    vec4 icol,
+                    vec4 ecol,
+                    float isize,
+                    float esize,
                     GLfloat lifetime
         );
 
@@ -34,8 +38,12 @@ class Particle {
     private:
         vec3 pos;
         vec3 vel;
-        vec3 col;
-        vec3 dcol;
+        vec4 col;
+        vec4 dcol;
+
+        float size;
+        float dsize;
+
         float lifetime; // lifetime in ms
         float age; // age in ms
 

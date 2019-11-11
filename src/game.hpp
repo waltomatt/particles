@@ -1,14 +1,15 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "GL/glut.h"
+#include "GLFW/glfw3.h"
 #include <glm/vec3.hpp>
-#include <chrono>
+#include <glm/vec4.hpp>
 
 #define FOV 60
-#define DRAW_DISTANCE 200
+#define DRAW_DISTANCE 500
 
 typedef glm::vec3 vec3;
+typedef glm::vec4 vec4;
 
 class Game {
     public:
@@ -21,10 +22,12 @@ class Game {
 
         static void Update();
         static void Display();
-        static void Reshape(int w, int h);
+        static void Reshape(GLFWwindow* window, int w, int h);
         static void Keyboard(unsigned char key, int x, int y);
 
-        static std::chrono::high_resolution_clock::time_point last_draw;
+        static double last_draw;
+        static GLFWwindow* window;
+        
 
 };
 

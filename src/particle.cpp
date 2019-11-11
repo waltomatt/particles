@@ -7,11 +7,14 @@ Particle* Particle::head = nullptr;
 Particle* Particle::tail = nullptr;
 int Particle::count = 0;
 
-Particle::Particle(vec3 startPos, vec3 startVel, vec3 startColor, vec3 endColor, GLfloat lifetime) {
+Particle::Particle(vec3 startPos, vec3 startVel, vec4 startColor, vec4 endColor, float isize, float esize, GLfloat lifetime) {
     this->pos = startPos;
     this->vel = startVel;
     this->col = startColor;
     this->dcol = (endColor - startColor) * (1.0f/lifetime);
+
+    this->size = isize;
+    this->dsize = (esize - isize) * (1.0f/lifetime);
  
     this->lifetime = lifetime;
     this->age = 0.0f;
@@ -58,10 +61,15 @@ void Particle::UpdateAll(float dt) {
 void Particle::DrawAll() {
     // go through our linked list and draw all the particles
     Particle* ptr = Particle::head;
+    glBegin(GL_POINTS);
+    
     while (ptr != nullptr) {
         ptr->Draw();
         ptr = ptr->next;
     }
+
+    glEnd();
+    
 }
 
 void Particle::Update(float dt) {
@@ -73,8 +81,10 @@ void Particle::Update(float dt) {
     // update colour based on the differential
     this->col = this->col + (this->dcol * dt);
 
+    this->size = this->size + (this->dsize * dt);
+
     // update the age
-    //this->age += dt;
+    this->age += dt;
 
     // check if we're too old for this anymore
     if (this->age >= this->lifetime)
@@ -82,12 +92,9 @@ void Particle::Update(float dt) {
 }
 
 void Particle::Draw() {
-    glPushMatrix();
 
     // draw each particle as a small sphere for now
-    glTranslatef(this->pos.x, this->pos.y, this->pos.z);
-    glColor3f(this->col.r, this->col.g, this->col.b);
-    glutSolidSphere(3, 50, 50);
-
-    glPopMatrix(); 
+    
+    glColor4f(this->col.r, this->col.g, this->col.b, this->col.a);
+    glVertex3f(this->pos.x, this->pos.y, this->pos.z);
 }
