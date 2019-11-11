@@ -24,6 +24,7 @@ class Game {
         static void Display();
         static void Reshape(GLFWwindow* window, int w, int h);
         static void Keyboard(unsigned char key, int x, int y);
+        static void InitImgui();
 
         static double last_draw;
         static GLFWwindow* window;

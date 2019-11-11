@@ -1,3 +1,7 @@
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 #include "game.hpp"
 #include "particle.hpp"
 
@@ -30,6 +34,8 @@ Game::Game(int argc, char **argv) {
     glfwMakeContextCurrent(Game::window);
     glfwSetWindowSizeCallback(Game::window, Game::Reshape);
     Game::Reshape(Game::window, 1920, 1080);
+
+    Game::InitImgui();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -77,6 +83,8 @@ void Game::Display() {
 
     Particle::DrawAll();
 
+    ImGui::ShowDemoWindow();
+
     glFlush(); 
 }
 
@@ -103,4 +111,14 @@ void Game::Update() {
     Game::last_draw = time_now;
 
     Particle::UpdateAll(dt);
+}
+
+
+void Game::InitImgui() {
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(Game::window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
 }
