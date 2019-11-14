@@ -8,14 +8,22 @@
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 
+enum ParticleType {
+    POINT,
+    BILLBOARD
+};
+
+class Emitter;
+
 class Particle {
     public:
-        Particle(   vec3 ipos,
+        Particle(   
+                    Emitter* emitter,
+                    vec3 ipos,
                     vec3 ivel,
+                    float size,
                     vec4 icol,
                     vec4 ecol,
-                    float isize,
-                    float esize,
                     GLfloat lifetime
         );
 
@@ -23,6 +31,7 @@ class Particle {
 
         static void UpdateAll(float dt);
         static void DrawAll();
+        static void RemoveAll();
         
         void Update(float dt);
         void Draw();
@@ -33,6 +42,7 @@ class Particle {
         static Particle* head;
         static Particle* tail;
 
+
         static int count;
 
     private:
@@ -42,11 +52,13 @@ class Particle {
         vec4 dcol;
 
         float size;
-        float dsize;
-
         float lifetime; // lifetime in ms
         float age; // age in ms
 
+        ParticleType type;
+        Emitter* emitter;
+
+        
 };
 
 #endif
