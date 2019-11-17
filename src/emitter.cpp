@@ -115,9 +115,10 @@ void Emitter::RenderParticles() {
     // trying to limit the number of rendercalls for performance
     // doing one glBegin per emitter
     // means we can have billboards and point particles in the same scene, but still maintain decent performance
-
     if (this->type == ParticleType::POINT) {
         glPointSize(this->size);
+        glDisable(GL_TEXTURE_2D);
+
         glBegin(GL_POINTS);
 
         while (ptr != nullptr) {
@@ -137,7 +138,8 @@ void Emitter::RenderParticles() {
 
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, this->texture); // set the texture
-
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBegin(GL_QUADS);
             while (ptr != nullptr) {
                 ptr->DrawQuad(right, up, size);
@@ -170,6 +172,30 @@ void Emitter::OptionMenu() {
     ImGui::Begin(name);
     ImGui::InputFloat3("pos", glm::value_ptr(this->pos), "%.1f");
     ImGui::SliderFloat("size", &this->size, 1, 10);
+
+    if (ImGui::RadioButton("Point", (int*)&this->type, (int)ParticleType::POINT)) {
+        this->type = ParticleType::POINT;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::RadioButton("Billboard", (int*)&this->type, (int)ParticleType::BILLBOARD))
+        this->type = ParticleType::BILLBOARD;
+
+    if (this->type == ParticleType::BILLBOARD) {
+        if (ImGui::BeginCombo("Texture", Game::textures[1])) {
+            for (int i=1; i<=Game::texture_count; i++) {
+                bool is_selected = (this->texture == i);
+                if (ImGui::Selectable(Game::textures[i], is_selected))
+                    this->texture = i;
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+    }
+
     ImGui::Text("Emit Velocities");
     ImGui::InputFloat3("vel_mean", glm::value_ptr(this->vel_mean), "%.1f");
     ImGui::InputFloat3("vel_var", glm::value_ptr(this->vel_var), "%.1f");
@@ -183,8 +209,11 @@ void Emitter::OptionMenu() {
     ImGui::InputFloat("life_mean", &this->life_mean);
     ImGui::InputFloat("life_var", &this->life_var);
 
-    ImGui::ColorPicker4("color_mean", glm::value_ptr(this->color_mean));
 
+    ImGui::Text("Colors");
+    ImGui::ColorPicker4("color_mean", glm::value_ptr(this->color_mean));
+    ImGui::InputFloat4("color_var", glm::value_ptr(this->color_var), "%.1f");
+    ImGui::ColorPicker4("color_end", glm::value_ptr(this->color_end));
     ImGui::End();
 }
 

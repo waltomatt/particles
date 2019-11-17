@@ -4,6 +4,7 @@
 #include "game.hpp"
 #include "particle.hpp"
 #include "emitter.hpp"
+#include "camera.hpp"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -26,8 +27,10 @@ vec3 Game::wind_direction = vec3(10, 0, 0);
 float Game::wind_strength = 0;
 
 char* Game::textures[100];
+int Game::texture_count = 0;
 
 GLFWwindow* Game::window = nullptr;
+Camera* Game::camera = nullptr;
 
 void glfw_error_callback(int error, const char* text) {
     fprintf(stderr, "glfw error: %s\n", text);
@@ -42,9 +45,9 @@ Game::Game(int argc, char** argv) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     if (argc < 2) // if we have an option, make it fullscreen
-        Game::window = glfwCreateWindow(2560, 1600, "Matt's COMP37111 particle simulator", NULL, NULL);
+        Game::window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Matt's COMP37111 particle simulator", NULL, NULL);
     else
-        Game::window = glfwCreateWindow(2560, 1600, "Matt's COMP37111 particle simulator", glfwGetPrimaryMonitor(), NULL); 
+        Game::window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Matt's COMP37111 particle simulator", glfwGetPrimaryMonitor(), NULL); 
 
     if (!Game::window) {
         fprintf(stderr, "Failed to create glfw window!\n");
@@ -55,12 +58,15 @@ Game::Game(int argc, char** argv) {
     glfwMakeContextCurrent(Game::window);
     glfwSwapInterval(Game::vsync);
     glfwSetWindowSizeCallback(Game::window, Game::Reshape);
-    Game::Reshape(Game::window, 1920, 1080);
+    Game::Reshape(Game::window, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     Game::InitImgui();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    Camera* camera = new Camera(window);
+    this->camera = camera;
 
     // init our scene
     Game::InitScene();
@@ -103,10 +109,7 @@ void Game::Display() {
     glLoadIdentity(); // load identity matrix
 
 
-    gluLookAt(  0.0, 230.0, 0.0, 
-                0.0, 0.0, 0.0, 
-                0.0, 0.0, 1.0   );
-
+    Game::camera->Transform();
     Emitter::RenderAll();
     Game::RenderGui();
 }
@@ -117,6 +120,7 @@ void Game::Update() {
     dt = dt * Game::speed;
     Game::last_update = time_now;
 
+    Game::camera->Update(dt);
     Emitter::UpdateAll(dt);
 }
 
@@ -150,7 +154,7 @@ GLint Game::LoadTexture(char* name) {
     sprintf(path, "textures/%s.png", name);
     GLint tex = SOIL_load_OGL_texture(
         path,
-        SOIL_LOAD_RGBA,
+        SOIL_LOAD_AUTO,
         SOIL_CREATE_NEW_ID,
         NULL
     );
@@ -165,6 +169,7 @@ GLint Game::LoadTexture(char* name) {
         memcpy(name_ptr, name, 1+strlen(name));
 
         Game::textures[tex] = name_ptr;
+        Game::texture_count++;
         return tex;
     }
 }
@@ -206,10 +211,16 @@ void Game::RenderFPS() {
 
 void Game::InitScene() {
     Game::LoadTexture("circle_01");
+    Game::LoadTexture("magic_01");
+    Game::LoadTexture("fire_01");
+    Game::LoadTexture("muzzle_01");
+    Game::LoadTexture("star_07");
+    Game::LoadTexture("twirl_01");
+
     Emitter* emitter = new Emitter(
         vec3(0,0,0),
         vec3(0, 0, -100), vec3(100, 100, -50),
-        4, ParticleType::BILLBOARD,
+        4, ParticleType::POINT,
         vec4(0, 0.3, 1, 1), vec4(1, 1, 1, 0), vec4(0.1, 0.1, 0.1, 0),
         0.5, 0.1,
         1000

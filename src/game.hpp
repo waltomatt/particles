@@ -6,12 +6,12 @@
 #include <glm/vec4.hpp>
 
 #include <vector>
-
-#define FOV 60
-#define DRAW_DISTANCE 500
+#include "constants.hpp"
 
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
+
+class Camera;
 
 class Game {
     public:
@@ -47,7 +47,9 @@ class Game {
         static bool vsync;
 
         static GLFWwindow* window;
+        static Camera* camera;
 
+        static int texture_count;
         static char* textures[100]; // index is textureID, val is name/path
         
 

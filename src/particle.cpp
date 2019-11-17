@@ -74,6 +74,8 @@ void Particle::DrawPoint() {
     glVertex3f(this->pos.x, this->pos.y, this->pos.z);
 }
 
+// We're not sorting these so we're gonna have alpha issues, sorting will be quite intensive imo
+
 void Particle::DrawQuad(vec3 right, vec3 up, float size) {
     // calculate vectors for 4 points of the quad
     vec3 bottom_left = this->pos - right * (size/2);
@@ -89,11 +91,13 @@ void Particle::DrawQuad(vec3 right, vec3 up, float size) {
     glTexCoord2f(1, 1);
     glVertex3f(bottom_right.x, bottom_right.y, bottom_right.z);
 
-    glTexCoord2f(0, 0);
-    glVertex3f(top_left.x, top_left.y, top_left.z);
+    
 
     glTexCoord2f(1, 0);
     glVertex3f(top_right.x, top_right.y, top_right.z);
+
+    glTexCoord2f(0, 0);
+    glVertex3f(top_left.x, top_left.y, top_left.z);
 
 }
 

@@ -1,5 +1,5 @@
 EXE = dist/particles
-SOURCES = src/main.cpp src/game.cpp src/particle.cpp src/emitter.cpp
+SOURCES = src/main.cpp src/game.cpp src/particle.cpp src/emitter.cpp src/camera.cpp
 SOURCES += 
 
 CXXFLAGS += -g
