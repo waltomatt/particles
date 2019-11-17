@@ -1,11 +1,16 @@
 #ifndef EMITTER_H
 #define EMITTER_H
 
+#include "GLFW/glfw3.h"
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <vector>
+
+#include "enums.hpp"
 
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
+
 
 class Particle;
 
@@ -18,8 +23,8 @@ class Emitter {
                     vec3 mean_velocity,
                     vec3 velocity_variance,
 
-                    float size_mean,
-                    float size_var,
+                    float size,
+                    ParticleType type,
 
                     vec4 mean_color,
                     vec4 end_color,
@@ -38,8 +43,9 @@ class Emitter {
         vec3 vel_var;
         bool vel_normal; // normalize the generated vector so emissions are spherical, and then scaled by the variance
 
-        float size_mean;
-        float size_var;
+        float size;
+        ParticleType type;
+        GLint texture;
 
         float life_mean;
         float life_var;
@@ -53,11 +59,12 @@ class Emitter {
         void Update(double dt);
         void Emit(int amount);
         void OptionMenu();
+        void RenderParticles();
 
         static int inc; // incrementing value that will be the ID of our emitter
         static void UpdateAll(double dt);
         static void RenderAll();
-        static void DeleteAll();
+        static void RemoveAll();
         static void RenderMenus();
         
         Particle* head;

@@ -1,7 +1,10 @@
-#include "game.hpp"
 #include "emitter.hpp"
+#include "game.hpp"
 #include "particle.hpp"
+
+#include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
+#include "glm/common.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 #include "imgui/imgui.h"
@@ -9,45 +12,52 @@
 #include <stdio.h>
 #include <string>
 
-typedef glm::vec4 vec4;
 
 std::vector<Emitter*> Emitter::emitters;
-int Emitter::inc = 0;
+int Emitter::inc = 0; // auto incrementing ID for emitter
+
 
 Emitter::Emitter(   vec3 pos, 
                     vec3 mean_velocity, vec3 velocity_variance,
-                    float size_mean, float size_var,
-                    vec4 mean_color, vec4 end_color, vec4 color_variance, 
-                    float mean_life, float life_variance, float emission_rate ) {
-
-
+                    float size,
+                    ParticleType type,
+                    vec4 mean_color, vec4 end_color, vec4 color_variance,
+                    float mean_lifetime, float lifetime_variance,
+                    float emission_rate
+) {
     this->pos = pos;
-
     this->vel_mean = mean_velocity;
     this->vel_var = velocity_variance;
-    this->vel_normal = true;
+    this->vel_normal = true; // default: normalize ejection velocities
 
-    this->size_mean = size_mean;
-    this->size_var = size_var;
+    this->size = size;
+    this->type = type;
+
+    if (type == ParticleType::BILLBOARD)
+        this->texture = 1; // first texture loaded is default
 
     this->color_mean = mean_color;
     this->color_end = end_color;
     this->color_var = color_variance;
 
-    this->life_mean = mean_life;
-    this->life_var = life_variance;
+    this->life_mean = mean_lifetime;
+    this->life_var = lifetime_variance;
 
     this->emit_rate = emission_rate;
-    this->emit_time = (float)1.0f/emission_rate; // convert from frequency to period
+    this->emit_time = (float)1.0f/emission_rate; // freq -> period
     this->last_emit = glfwGetTime();
 
-    this->id = Emitter::inc++;
+    this->id = Emitter::inc++; // set ID and increment
 
-    Emitter::emitters.push_back(this);
+    // head and tail of linked list of particles
+    this->head = nullptr;
+    this->tail = nullptr;
 
+    Emitter::emitters.push_back(this); // add adr of this emitter to the vector
 }
 
 void Emitter::Update(double dt) {
+    // do emissions
     double time_now = glfwGetTime();
 
     double change = (time_now - this->last_emit);
@@ -57,6 +67,23 @@ void Emitter::Update(double dt) {
     if (amt > 0) {
         this->Emit(amt);
         this->last_emit = time_now;
+    }
+
+    // update each particle
+
+    Particle* ptr = this->head;
+
+    while (ptr != nullptr) {
+        ptr->Update(dt);
+        ptr = ptr->next;
+    }
+}
+
+// static function to update all particles
+void Emitter::UpdateAll(double dt) {
+    for (auto &emitter: Emitter::emitters) {
+        if (emitter != nullptr)
+            emitter->Update(dt);
     }
 }
 
@@ -72,8 +99,7 @@ void Emitter::Emit(int amount) {
         Particle* particle = new Particle(
             this,
             this->pos,
-            vel, // Pinitial = Pmean + (Rand * Pvariance)
-            this->size_mean + (1.0f-2*Game::RandFloat() * this->size_var),
+            vel, 
             this->color_mean + (1.0f-2*Game::RandFloat()) * this->color_var,
             this->color_end + (1.0f-2*Game::RandFloat()) * this->color_var,
             this->life_mean + (Game::RandFloat() * this->life_var)
@@ -83,20 +109,67 @@ void Emitter::Emit(int amount) {
     }
 }
 
-void Emitter::UpdateAll(double dt) {
+void Emitter::RenderParticles() {
+    Particle* ptr = this->head;
+
+    // trying to limit the number of rendercalls for performance
+    // doing one glBegin per emitter
+    // means we can have billboards and point particles in the same scene, but still maintain decent performance
+
+    if (this->type == ParticleType::POINT) {
+        glPointSize(this->size);
+        glBegin(GL_POINTS);
+
+        while (ptr != nullptr) {
+            ptr->DrawPoint();
+            ptr = ptr->next;
+        }
+
+        glEnd();
+                
+    } else if (this->type == ParticleType::BILLBOARD) {
+        float modelView[16];
+
+        glGetFloatv(GL_MODELVIEW_MATRIX, modelView); // get the modelview matrix
+
+        vec3 right = vec3(modelView[0], modelView[4], modelView[8]); // calculate the camera angle right vector
+        vec3 up = vec3(modelView[1], modelView[5], modelView[9]); // and up vector
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, this->texture); // set the texture
+
+        glBegin(GL_QUADS);
+            while (ptr != nullptr) {
+                ptr->DrawQuad(right, up, size);
+                ptr = ptr->next;
+            }
+        glEnd();
+    }
+
+    
+}
+
+void Emitter::RenderAll() {
     for (auto &emitter: Emitter::emitters) {
         if (emitter != nullptr)
-            emitter->Update(dt);
+            emitter->RenderParticles();
     }
 }
+
+void Emitter::RemoveAll() {
+    for (auto &emitter: Emitter::emitters) {
+        if (emitter != nullptr)
+            delete emitter;
+    }
+}
+
 
 void Emitter::OptionMenu() {
     char name[14];
     sprintf(name, "Emitter #%d", this->id);
     ImGui::Begin(name);
     ImGui::InputFloat3("pos", glm::value_ptr(this->pos), "%.1f");
-    ImGui::SliderFloat("size_mean", &this->size_mean, 1, 10);
-    ImGui::SliderFloat("size_var", &this->size_var, 1, 10);
+    ImGui::SliderFloat("size", &this->size, 1, 10);
     ImGui::Text("Emit Velocities");
     ImGui::InputFloat3("vel_mean", glm::value_ptr(this->vel_mean), "%.1f");
     ImGui::InputFloat3("vel_var", glm::value_ptr(this->vel_var), "%.1f");

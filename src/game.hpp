@@ -5,6 +5,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <vector>
+
 #define FOV 60
 #define DRAW_DISTANCE 500
 
@@ -29,6 +31,10 @@ class Game {
         static void InitImgui();
         static void RenderGui();
 
+        static void InitScene();
+
+        static GLint LoadTexture(char* name);
+
         static void RenderFPS();
 
         static vec3 RandVec3();
@@ -41,6 +47,8 @@ class Game {
         static bool vsync;
 
         static GLFWwindow* window;
+
+        static char* textures[100]; // index is textureID, val is name/path
         
 
 };
