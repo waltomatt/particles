@@ -6,6 +6,7 @@
 #include <glm/vec4.hpp>
 
 #include <vector>
+#include "enums.hpp"
 #include "constants.hpp"
 
 typedef glm::vec3 vec3;
@@ -35,6 +36,7 @@ class Game {
         static void InitScene();
         static void UpdateScene(double dt);
         static void RenderScene();
+        static void RenderSceneGui();
 
         static GLint LoadTexture(char* name);
 
@@ -50,6 +52,8 @@ class Game {
         static bool vsync;
         static bool context;
         static bool axis;
+
+        static DemoType demo;
 
         static GLFWwindow* window;
         static Camera* camera;

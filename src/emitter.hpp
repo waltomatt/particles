@@ -36,6 +36,8 @@ class Emitter {
                     float emission_rate
                 );
 
+        ~Emitter();
+
         int id;
         vec3 pos;
         
@@ -55,12 +57,14 @@ class Emitter {
         vec4 color_var;
 
         float emit_rate;
+        int emit_amt;
 
         void Update(double dt);
         void Emit(int amount);
         void OptionMenu();
         void RenderParticles();
-
+        void RemoveParticles();
+        
         static int inc; // incrementing value that will be the ID of our emitter
         static void UpdateAll(double dt);
         static void RenderAll();

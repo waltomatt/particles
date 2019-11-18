@@ -6,4 +6,10 @@ enum ParticleType {
     BILLBOARD
 };
 
+enum DemoType {
+    NONE,
+    MOTION
+
+};
+
 #endif

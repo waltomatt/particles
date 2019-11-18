@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <algorithm>
 
 
 std::vector<Emitter*> Emitter::emitters;
@@ -53,7 +54,28 @@ Emitter::Emitter(   vec3 pos,
     this->head = nullptr;
     this->tail = nullptr;
 
+    // emit amount for emit function
+    this->emit_amt = 0;
+
     Emitter::emitters.push_back(this); // add adr of this emitter to the vector
+}
+
+Emitter::~Emitter() {
+    Emitter::emitters.erase(std::find(Emitter::emitters.begin(), Emitter::emitters.end(), this));
+
+    // delete all the particles
+    this->RemoveParticles();
+}
+
+void Emitter::RemoveParticles() {
+    Particle* ptr = this->head;
+    Particle* to_del = nullptr;
+
+    while (ptr != nullptr) {
+        to_del = ptr;
+        ptr = ptr->next;
+        delete to_del;
+    }
 }
 
 void Emitter::Update(double dt) {
@@ -170,6 +192,9 @@ void Emitter::OptionMenu() {
     char name[14];
     sprintf(name, "Emitter #%d", this->id);
     ImGui::Begin(name);
+    if (ImGui::Button("Clear Particles"))
+        this->RemoveParticles();
+        
     ImGui::InputFloat3("pos", glm::value_ptr(this->pos), "%.1f");
     ImGui::SliderFloat("size", &this->size, 1, 10);
 
@@ -214,6 +239,13 @@ void Emitter::OptionMenu() {
     ImGui::ColorPicker4("color_mean", glm::value_ptr(this->color_mean));
     ImGui::InputFloat4("color_var", glm::value_ptr(this->color_var), "%.1f");
     ImGui::ColorPicker4("color_end", glm::value_ptr(this->color_end));
+    
+    
+    ImGui::InputInt("Amount", &this->emit_amt);
+    ImGui::SameLine();
+    if (ImGui::Button("Emit!"))
+        this->Emit(this->emit_amt);
+
     ImGui::End();
 }
 

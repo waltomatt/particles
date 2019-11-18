@@ -30,7 +30,7 @@ void Camera::Transform() {
    
 
 void Camera::Update(double dt) {
-    if (this->context || this->disabled) return;
+    
     double x, y;
     glfwGetCursorPos(this->window, &x, &y);
     
@@ -40,6 +40,8 @@ void Camera::Update(double dt) {
 
     this->mousepos.x = x;
     this->mousepos.y = y;
+
+    if (this->context || this->disabled) return;
 
     this->yaw += (dx * MOUSE_SPEED * dt);
     this->pitch += (dy * MOUSE_SPEED * dt);

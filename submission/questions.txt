@@ -1,0 +1,28 @@
+4.
+	My simulation models basic newtonian physics where the particles have unit mass.
+	
+	To prove they work, the demo creates a particle at (0, 100, 0).
+	Gravity is the only force, at -9.81ms^2 in the y axis
+	
+	s=ut + 1/2at^2
+	-100 = -4.905t^2
+	t = 4.5152s
+
+	As shown by the demo, this figure matches.
+
+5.	Motion has been optimised by computing velocity and position using euler integrations.
+
+	v = v + a*dt
+	s = s + v*dt
+
+6.	I'm fairly happy with the overall performance of my simulation.
+	I implemented the particle structure as a linked list, for very efficient 
+	iteration, and adding / removing particles in any order.
+
+	The simulation is certainly limited by the CPU, which can be shown by observing my
+	100% CPU usage when there are many particles present. This is because we are updating
+	particles and issuing draw calls (glBegin) using the CPU. If I implemented the updating
+	and management of particles as shaders they would be computed on the CPU which would
+	yield a huge performance increase.
+
+	I have produced graphs showing # Particles vs FPS, # Particles vs CPU usage

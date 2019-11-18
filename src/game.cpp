@@ -33,7 +33,7 @@ GLFWwindow* Game::window = nullptr;
 Camera* Game::camera = nullptr;
 bool Game::context = false;
 bool Game::axis = true;
-
+DemoType Game::demo = DemoType::NONE;
 void glfw_error_callback(int error, const char* text) {
     fprintf(stderr, "glfw error: %s\n", text);
 }
@@ -71,6 +71,14 @@ Game::Game(int argc, char** argv) {
     
     Camera* camera = new Camera(window);
     this->camera = camera;
+
+    // Load textures
+    Game::LoadTexture("circle_01");
+    Game::LoadTexture("magic_01");
+    Game::LoadTexture("fire_01");
+    Game::LoadTexture("muzzle_01");
+    Game::LoadTexture("star_07");
+    Game::LoadTexture("twirl_01");
 
     // init our scene
     Game::InitScene();
@@ -127,9 +135,11 @@ void Game::Display() {
 
     if (Game::axis)
         Game::RenderAxis();
+
     Game::RenderScene();
     Emitter::RenderAll();
     Game::RenderGui();
+    
 }
 
 void Game::Update() {
@@ -140,6 +150,7 @@ void Game::Update() {
 
     Game::camera->Update(dt);
     Emitter::UpdateAll(dt);
+    Game::UpdateScene(dt);
 }
 
 void Game::InitImgui() {
@@ -217,7 +228,11 @@ void Game::RenderGui() {
     ImGui::Begin("Particle Simulator");
 
     ImGui::Text("camera pos: (%.2f, %.2f, %.2f)", Game::camera->pos.x, Game::camera->pos.y, Game::camera->pos.z);
+    ImGui::SameLine();
 
+    if (ImGui::Button("reset"))
+        Game::camera->pos = vec3(100, 100, 100);
+        
     if (ImGui::Button("Create new emitter")) {
         Emitter* emitter = new Emitter(
             vec3(0,0,0),
@@ -242,17 +257,32 @@ void Game::RenderGui() {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }  
 
-    if (ImGui::Button("Clear particles"))
+    if (ImGui::Button("Clear emitters"))
         Emitter::RemoveAll();
+
+
+    ImGui::End();
+
+
+    ImGui::Begin("Examples");
+    if (ImGui::Button("Motion accuracy demo")) {
+        Game::demo = DemoType::MOTION;
+        Game::InitScene();
+    }
 
     ImGui::End();
 
     Game::RenderFPS();
     Emitter::RenderMenus();
+    Game::RenderSceneGui();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+bool fpsRecording = false;
+double fpsStartTime = 0;
+unsigned int frames = 0;
 
 void Game::RenderFPS() {
     ImGui::Begin("Performance");
@@ -261,24 +291,93 @@ void Game::RenderFPS() {
     if (ImGui::Checkbox("vsync", &Game::vsync))
         glfwSwapInterval(Game::vsync);
 
+    if (frames > 0) {
+        if (fpsRecording)
+            ImGui::Text("Measuring frame rate...");
+        else
+            ImGui::Text("10 second FPS avg: %.2f fps", ((float)frames / 10.0f));
+    }
+
+    if (ImGui::Button("Record 10s FPS avg")) {
+        fpsRecording = true;
+        fpsStartTime = glfwGetTime();
+        frames = 0;
+    }
+
     ImGui::End();
 }
 
-void Game::InitScene() {
-    Game::LoadTexture("circle_01");
-    Game::LoadTexture("magic_01");
-    Game::LoadTexture("fire_01");
-    Game::LoadTexture("muzzle_01");
-    Game::LoadTexture("star_07");
-    Game::LoadTexture("twirl_01");
+Emitter* motionDemoEmitter;
+bool demoHitGround = false;
+double demoHitGroundTime = 0;
 
+void Game::InitScene() {
+    
+
+    if (Game::demo == DemoType::MOTION) {
+        Emitter::RemoveAll();
+        demoHitGround = false;
+        demoHitGroundTime = 0;
+
+        // create a single particle emitter at position (0, 100, 0)
+        motionDemoEmitter = new Emitter(
+            vec3(0, 100, 0),
+            vec3(0, 0, 0), vec3(0, 0, 0),
+            10, ParticleType::POINT,
+            vec4(0, 0, 1, 1), vec4(1, 0, 0, 1),vec4(0,0,0,0),
+            100, 0, 0
+        );
+
+
+    }
     
 }
 
-void Game::UpdateScene(double dt) {
 
+
+void Game::UpdateScene(double dt) {
+    if (fpsRecording) {
+        if (glfwGetTime() - fpsStartTime >= 10.0f)
+            fpsRecording = false;
+        else
+            frames++;
+    }
+
+    if (Game::demo == DemoType::MOTION && motionDemoEmitter != nullptr) {
+        if (motionDemoEmitter->head != nullptr) {
+            Particle* particle = motionDemoEmitter->head;
+            if (particle->pos.y <= 0 && !demoHitGround) {
+                demoHitGroundTime = particle->age;
+                demoHitGround = true;
+            }
+        }
+    }
 }
 
 void Game::RenderScene() {
-    
+
+}
+
+
+void Game::RenderSceneGui() {
+    if (Game::demo == DemoType::MOTION) {
+        ImGui::Begin("Motion demo");
+        
+
+        if (motionDemoEmitter->head == nullptr) {
+            if (ImGui::Button("Start"))
+                motionDemoEmitter->Emit(1);
+        } else {
+            Particle* particle = motionDemoEmitter->head;
+            ImGui::Text("particle age: %.2f", particle->age);
+            ImGui::Text("position: (%.2f, %.2f, %.2f)", particle->pos.x, particle->pos.y, particle->pos.z);
+
+            if (demoHitGround)
+                ImGui::Text("Hit y=0 at %.2fs", demoHitGroundTime);   
+        }
+
+        ImGui::End();
+
+        
+    }
 }
