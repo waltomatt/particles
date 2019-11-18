@@ -53,7 +53,7 @@ void Particle::Update(float dt) {
     // Update position based on velocity
     this->pos = this->pos + (this->vel * dt);
     // Update velocity based on static gravity at the mo
-    this->vel = this->vel + (vec3(0.0f, 0.0f, Game::gravity)  * dt);
+    this->vel = this->vel + (vec3(0.0f, Game::gravity, 0.0f)  * dt);
 
     // also wind position
     this->vel = this->vel + (Game::wind_direction * Game::wind_strength * dt);

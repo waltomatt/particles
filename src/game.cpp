@@ -31,6 +31,8 @@ int Game::texture_count = 0;
 
 GLFWwindow* Game::window = nullptr;
 Camera* Game::camera = nullptr;
+bool Game::context = false;
+bool Game::axis = true;
 
 void glfw_error_callback(int error, const char* text) {
     fprintf(stderr, "glfw error: %s\n", text);
@@ -58,6 +60,8 @@ Game::Game(int argc, char** argv) {
     glfwMakeContextCurrent(Game::window);
     glfwSwapInterval(Game::vsync);
     glfwSetWindowSizeCallback(Game::window, Game::Reshape);
+    glfwSetKeyCallback(Game::window, Game::Keyboard);
+
     Game::Reshape(Game::window, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     Game::InitImgui();
@@ -93,8 +97,16 @@ void Game::Reshape(GLFWwindow* window, int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Game::Keyboard(unsigned char key, int x, int y) {
-    if (key == 27) exit(0);
+void Game::Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS) {
+        Game::camera->context = !Game::context;
+        if (Game::camera->context)
+            glfwSetInputMode(Game::window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        else
+            glfwSetInputMode(Game::window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) exit(0);
 }
 
 double Game::last_draw = 0;
@@ -108,8 +120,14 @@ void Game::Display() {
     glClear(GL_COLOR_BUFFER_BIT); // clear the screen
     glLoadIdentity(); // load identity matrix
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     Game::camera->Transform();
+
+    if (Game::axis)
+        Game::RenderAxis();
+    Game::RenderScene();
     Emitter::RenderAll();
     Game::RenderGui();
 }
@@ -174,6 +192,23 @@ GLint Game::LoadTexture(char* name) {
     }
 }
 
+void Game::RenderAxis() {
+
+    glLineWidth(2.0);
+    glBegin(GL_LINES);
+    glColor3f(1.0, 0.0, 0.0);       // X axis - red
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(AXIS_SIZE, 0.0, 0.0);
+    glColor3f(0.0, 1.0, 0.0);       // Y axis - green
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, AXIS_SIZE, 0.0);
+    glColor3f(0.0, 0.0, 1.0);       // Z axis - blue
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, AXIS_SIZE);
+    glEnd();
+
+}
+
 void Game::RenderGui() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -181,11 +216,31 @@ void Game::RenderGui() {
 
     ImGui::Begin("Particle Simulator");
 
+    ImGui::Text("camera pos: (%.2f, %.2f, %.2f)", Game::camera->pos.x, Game::camera->pos.y, Game::camera->pos.z);
+
+    if (ImGui::Button("Create new emitter")) {
+        Emitter* emitter = new Emitter(
+            vec3(0,0,0),
+            vec3(0, 0, 0), vec3(10, 10, 10),
+            4, ParticleType::POINT,
+            vec4(0, 0.3, 1, 1), vec4(1, 1, 1, 0), vec4(0.1, 0.1, 0.1, 0),
+            0.5, 0.1,
+            1000
+        );
+    }
+
     ImGui::SliderFloat("Sim Speed", &Game::speed, 0.000f, 5.0f);
     ImGui::SliderFloat("Gravity", &Game::gravity, -50.f, 50.f);
 
     ImGui::InputFloat3("Wind dir", glm::value_ptr(Game::wind_direction));
     ImGui::SliderFloat("Wind speed", &Game::wind_strength, 0, 100);
+
+    ImGui::Checkbox("Draw axis", &Game::axis);
+
+    if (ImGui::Button("Exit context mode")) {
+        Game::camera->context = false;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }  
 
     if (ImGui::Button("Clear particles"))
         Emitter::RemoveAll();
@@ -217,12 +272,13 @@ void Game::InitScene() {
     Game::LoadTexture("star_07");
     Game::LoadTexture("twirl_01");
 
-    Emitter* emitter = new Emitter(
-        vec3(0,0,0),
-        vec3(0, 0, -100), vec3(100, 100, -50),
-        4, ParticleType::POINT,
-        vec4(0, 0.3, 1, 1), vec4(1, 1, 1, 0), vec4(0.1, 0.1, 0.1, 0),
-        0.5, 0.1,
-        1000
-    );
+    
+}
+
+void Game::UpdateScene(double dt) {
+
+}
+
+void Game::RenderScene() {
+    
 }

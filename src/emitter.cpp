@@ -138,14 +138,14 @@ void Emitter::RenderParticles() {
 
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, this->texture); // set the texture
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
         glBegin(GL_QUADS);
             while (ptr != nullptr) {
                 ptr->DrawQuad(right, up, size);
                 ptr = ptr->next;
             }
         glEnd();
+        glDisable(GL_TEXTURE_2D);
     }
 
     

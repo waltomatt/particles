@@ -27,11 +27,14 @@ class Game {
         static void Update();
         static void Display();
         static void Reshape(GLFWwindow* window, int w, int h);
-        static void Keyboard(unsigned char key, int x, int y);
+        static void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods);
         static void InitImgui();
         static void RenderGui();
+        static void RenderAxis();
 
         static void InitScene();
+        static void UpdateScene(double dt);
+        static void RenderScene();
 
         static GLint LoadTexture(char* name);
 
@@ -45,6 +48,8 @@ class Game {
         static double frame_time;
 
         static bool vsync;
+        static bool context;
+        static bool axis;
 
         static GLFWwindow* window;
         static Camera* camera;
